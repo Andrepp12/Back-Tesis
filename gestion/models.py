@@ -20,8 +20,10 @@ class Producto(models.Model):
     marca = models.ForeignKey(Marca, on_delete=models.CASCADE)
     codigo = models.CharField(max_length=50)
     descripcion = models.TextField()
+    talla =models.IntegerField()
     precio = models.DecimalField(max_digits=10, decimal_places=2)
     stock_almacen = models.IntegerField(default=0)
+    estado = models.CharField(max_length=50)
 
     def __str__(self):
         return f'{self.nombre} ({self.codigo})'
@@ -54,3 +56,10 @@ class Solicitud(models.Model):
 
     def __str__(self):
         return f'Solicitud {self.id} - {self.stand.nombre}'
+    
+class DetalleSolicitud(models.Model):
+    solicitud = models.ForeignKey(Solicitud, on_delete=models.CASCADE, related_name='detalles')
+    producto = models.ForeignKey(Producto, on_delete=models.CASCADE)
+
+    def __str__(self):
+        return f'{self.producto.nombre} - Cantidad: {self.cantidad}'
