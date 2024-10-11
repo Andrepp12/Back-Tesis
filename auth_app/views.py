@@ -8,6 +8,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from django.contrib.auth.hashers import make_password
 from rest_framework.permissions import AllowAny
+from django.contrib.auth import authenticate
 
 class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
     @classmethod
@@ -19,9 +20,29 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
         return token
 
     def validate(self, attrs):
+        # Validar usuario y contraseña
         data = super().validate(attrs)
-        data['role'] = self.user.role  # Devolver también el rol en la respuesta
+
+        # Obtener las credenciales desde los atributos
+        username = attrs.get('username')
+        password = attrs.get('password')
+
+        # Autenticar el usuario
+        user = authenticate(username=username, password=password)
+
+        # Si la autenticación falla, retornar un error
+        if user is None:
+            raise serializers.ValidationError('Credenciales incorrectas')
+
+        # Verificar el atributo 'estado' del usuario
+        if user.estado != 1:
+            raise serializers.ValidationError('Tu cuenta no está activa o tiene un estado no válido')
+
+        # Si todo está bien, agregar el rol al token
+        data['role'] = user.role  # Devolver también el rol en la respuesta
+
         return data
+
 
 class CustomTokenObtainPairView(TokenObtainPairView):
     serializer_class = CustomTokenObtainPairSerializer
