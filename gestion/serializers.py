@@ -54,7 +54,7 @@ class DetalleSolicitudSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 class DevolucionSerializer(serializers.ModelSerializer):
-    Proveedor = ProveedorSerializer()
+    # Proveedor = ProveedorSerializer()
     class Meta:
         model = Devolucion
         fields = '__all__'
