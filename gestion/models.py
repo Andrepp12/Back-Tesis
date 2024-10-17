@@ -1,3 +1,4 @@
+from django.utils import timezone
 from django.db import models
 
 class Marca(models.Model):
@@ -20,7 +21,7 @@ class Proveedor(models.Model):
 
 class Producto(models.Model):
     nombre = models.CharField(max_length=100)
-    imagen = models.ImageField(upload_to='images/', default='default_image.png')  # Define el valor predeterminado
+    imagen = models.ImageField(upload_to='images/', blank=True, null=True)  # Define el valor predeterminado
     marca = models.ForeignKey(Marca, on_delete=models.CASCADE)
     codigo = models.CharField(max_length=50)
     descripcion = models.TextField()
@@ -47,7 +48,10 @@ class ProductoStand(models.Model):
 
 class Pedido(models.Model):
     proveedor = models.ForeignKey(Proveedor, on_delete=models.CASCADE)
-    fecha_pedido = models.DateField()
+    factura = models.CharField(max_length=50, default='000000')
+    fecha_pedido = models.DateField( default=timezone.now)
+    fecha_entrega = models.DateField( default=timezone.now )
+    precio_total = models.DecimalField(max_digits=10, decimal_places=2)
     estado = models.IntegerField(default=1)  # Pendiente(1), Recibido(2), Cancelado(0)
 
     def __str__(self):
@@ -73,7 +77,7 @@ class Solicitud(models.Model):
     
 class DetalleSolicitud(models.Model):
     solicitud = models.ForeignKey(Solicitud, on_delete=models.CASCADE, related_name='detalles_solicitud')
-    cantidad = models.IntegerField()
+    cantidad = models.IntegerField(default=0)
     producto = models.ForeignKey(Producto, on_delete=models.CASCADE)
     estado = models.IntegerField(default=1)
 
@@ -81,8 +85,9 @@ class DetalleSolicitud(models.Model):
         return f'{self.producto.nombre} - Cantidad: {self.cantidad}'
 
 class Devolucion(models.Model):
-    pedido = models.ForeignKey(Pedido, on_delete=models.CASCADE)
-    solicitud = models.ForeignKey(Solicitud, on_delete=models.CASCADE)
+    pedido = models.ForeignKey(Pedido, on_delete=models.CASCADE,  blank=True, null=True)
+    solicitud = models.ForeignKey(Solicitud, on_delete=models.CASCADE,  blank=True, null=True)
+    boleta = models.CharField(max_length=50,  blank=True, null=True)
     razon = models.TextField()
     descripcion = models.TextField()
     fecha_devolucion = models.DateField()
@@ -90,7 +95,7 @@ class Devolucion(models.Model):
 
 class DetalleDevolucion(models.Model):
     devolucion = models.ForeignKey(Devolucion, on_delete=models.CASCADE, related_name='detalles_devolucion')
-    producto = models.ForeignKey(Devolucion, on_delete=models.CASCADE, related_name='detalles_producto')
+    producto = models.ForeignKey(Producto, on_delete=models.CASCADE, related_name='detalles_producto')
     cantidad = models.IntegerField()
     descripcion = models.TextField()
     estado = models.IntegerField(default=1)

@@ -1,5 +1,6 @@
 from django.shortcuts import render
 from rest_framework import viewsets
+from rest_framework.decorators import api_view
 from .models import Marca, Proveedor, Producto, Stand, Pedido, DetallePedido, Solicitud, DetalleSolicitud, Devolucion, DetalleDevolucion
 from .serializers import MarcaSerializer, ProveedorSerializer, ProductoSerializer, StandSerializer, PedidoSerializer, DetallePedidoSerializer, SolicitudSerializer, DetalleSolicitudSerializer, DevolucionSerializer, DetalleDevolucionSerializer
 from rest_framework.permissions import IsAuthenticated
@@ -133,3 +134,26 @@ class DetalleDevolucionViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         return DetalleDevolucion.objects.filter(estado=1)
+
+
+@api_view(['GET'])
+def detalles_por_pedido(request, pedido_id):
+    try:
+        # Filtrar los detalles por pedido
+        detalles = DetallePedido.objects.filter(pedido_id=pedido_id)
+        # Serializar los detalles
+        serializer = DetallePedidoSerializer(detalles, many=True)
+        return Response(serializer.data)
+    except DetallePedido.DoesNotExist:
+        return Response({"detail": "No se encontraron detalles para este pedido."}, status=404)
+    
+@api_view(['GET'])
+def detalles_por_solicitud(request, solicitud_id):
+    try:
+        # Filtrar los detalles por solicitud
+        detalles = DetalleSolicitud.objects.filter(solicitud_id=solicitud_id)
+        # Serializar los detalles
+        serializer = DetalleSolicitudSerializer(detalles, many=True)
+        return Response(serializer.data)
+    except DetalleSolicitud.DoesNotExist:
+        return Response({"detail": "No se encontraron detalles para esta solicitud."}, status=404)
