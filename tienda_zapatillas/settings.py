@@ -27,7 +27,7 @@ SECRET_KEY = 'django-insecure-&s68ef3bwcg$svgv#4%*!u7ups99a8$(#9uf4f*lonmt6q_+=x
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['localhost', '127.0.0.1']
 
 
 # Application definition
@@ -45,6 +45,7 @@ INSTALLED_APPS = [
     'gestion',
     'django_extensions',
     'corsheaders',
+    'chatbot',
 ]
 
 MIDDLEWARE = [
@@ -158,7 +159,9 @@ SIMPLE_JWT = {
 
 CORS_ALLOW_ALL_ORIGINS = True
 CORS_ALLOW_CREDENTIALS = True
-
+CSRF_TRUSTED_ORIGINS = [
+    "http://localhost:3000",  # Agrega el origen de tu frontend
+]
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')

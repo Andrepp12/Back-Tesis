@@ -6,6 +6,15 @@ from .serializers import MarcaSerializer, ProveedorSerializer, ProductoSerialize
 from rest_framework.permissions import IsAuthenticated
 from rest_framework import status
 from rest_framework.response import Response
+from django.http import JsonResponse
+from .services import obtener_suma_cantidades  # Ajusta la ruta según sea necesario
+from .services import obtener_anios
+from django.db.models import Count
+from django.utils import timezone
+from rest_framework.views import APIView
+from django.shortcuts import get_object_or_404
+from django.db.models import Sum, F
+from django.db.models.functions import ExtractMonth  # Importa ExtractMonth
 
 class MarcaViewSet(viewsets.ModelViewSet):
     queryset = Marca.objects.all()
@@ -109,7 +118,15 @@ class SolicitudViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        return Solicitud.objects.filter(estado=1)
+        return Solicitud.objects.filter(estado__in=[1, 2])
+    
+    def destroy(self, request, *args, **kwargs):
+        # Obtener el objeto a eliminar (cambiar estado)
+        solicitud = self.get_object()
+        # Cambiar el estado a 0 en lugar de eliminar el objeto
+        solicitud.estado = 0
+        solicitud.save()
+        return Response({"detail": "solicitud marcada como inactivo"}, status=status.HTTP_204_NO_CONTENT)
 
 class DetalleSolicitudViewSet(viewsets.ModelViewSet):
     queryset = DetalleSolicitud.objects.all()
@@ -119,6 +136,14 @@ class DetalleSolicitudViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         return DetalleSolicitud.objects.filter(estado=1)
     
+    def destroy(self, request, *args, **kwargs):
+        # Obtener el objeto a eliminar (cambiar estado)
+        detalleSolicitud = self.get_object()
+        # Cambiar el estado a 0 en lugar de eliminar el objeto
+        detalleSolicitud.estado = 0
+        detalleSolicitud.save()
+        return Response({"detail": "detalleSolicitud marcada como inactivo"}, status=status.HTTP_204_NO_CONTENT)
+    
 class DevolucionViewSet(viewsets.ModelViewSet):
     queryset = Devolucion.objects.all()
     serializer_class = DevolucionSerializer
@@ -126,6 +151,14 @@ class DevolucionViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         return Devolucion.objects.filter(estado=1)
+    
+    def destroy(self, request, *args, **kwargs):
+        # Obtener el objeto a eliminar (cambiar estado)
+        devolucion = self.get_object()
+        # Cambiar el estado a 0 en lugar de eliminar el objeto
+        devolucion.estado = 0
+        devolucion.save()
+        return Response({"detail": "devolucion marcada como inactivo"}, status=status.HTTP_204_NO_CONTENT)
 
 class DetalleDevolucionViewSet(viewsets.ModelViewSet):
     queryset = DetalleDevolucion.objects.all()
@@ -134,6 +167,14 @@ class DetalleDevolucionViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         return DetalleDevolucion.objects.filter(estado=1)
+    
+    def destroy(self, request, *args, **kwargs):
+        # Obtener el objeto a eliminar (cambiar estado)
+        detalledevolucion = self.get_object()
+        # Cambiar el estado a 0 en lugar de eliminar el objeto
+        detalledevolucion.estado = 0
+        detalledevolucion.save()
+        return Response({"detail": "detalledevolucion marcada como inactivo"}, status=status.HTTP_204_NO_CONTENT)
 
 
 @api_view(['GET'])
@@ -157,3 +198,115 @@ def detalles_por_solicitud(request, solicitud_id):
         return Response(serializer.data)
     except DetalleSolicitud.DoesNotExist:
         return Response({"detail": "No se encontraron detalles para esta solicitud."}, status=404)
+    
+@api_view(['GET'])
+def detalles_por_devolucion(request, devolucion_id):
+    try:
+        # Filtrar los detalles por devolucion
+        detalles = DetalleDevolucion.objects.filter(devolucion_id=devolucion_id)
+        # Serializar los detalles
+        serializer = DetalleDevolucionSerializer(detalles, many=True)
+        return Response(serializer.data)
+    except DetalleDevolucion.DoesNotExist:
+        return Response({"detail": "No se encontraron detalles para esta devolucion."}, status=404)
+    
+@api_view(['GET'])
+def listar_devoluciones_con_solicitud(request):
+    # Filtrar las devoluciones donde 'solicitud' no es null
+    devoluciones = Devolucion.objects.filter(solicitud__isnull=False)
+    
+    # Serializar los datos
+    serializer = DevolucionSerializer(devoluciones, many=True)
+    
+    # Retornar la respuesta JSON con las devoluciones filtradas
+    return Response(serializer.data)
+
+@api_view(['GET'])
+def listar_devoluciones_con_pedido(request):
+    # Filtrar las devoluciones donde 'pedido' no es null
+    devoluciones = Devolucion.objects.filter(pedido__isnull=False)
+    
+    # Serializar los datos
+    serializer = DevolucionSerializer(devoluciones, many=True)
+    
+    # Retornar la respuesta JSON con las devoluciones filtradas
+    return Response(serializer.data)
+
+@api_view(['GET'])
+def listar_devoluciones_con_boleta(request):
+    # Filtrar las devoluciones donde 'pedido' no es null
+    devoluciones = Devolucion.objects.filter(boleta__isnull=False)
+    
+    # Serializar los datos
+    serializer = DevolucionSerializer(devoluciones, many=True)
+    
+    # Retornar la respuesta JSON con las devoluciones filtradas
+    return Response(serializer.data)
+
+
+@api_view(['GET'])
+def suma_cantidades(request):
+    if request.method == 'GET':
+        producto_id = request.GET.get('producto_id')
+        year = request.GET.get('year')  # Cambiar 'año' a 'year'
+
+        if not producto_id or not year:
+            return JsonResponse({'error': 'Parámetros faltantes'}, status=400)
+
+        try:
+            # Sumar las cantidades agrupadas por mes
+            resultados = (
+                DetalleSolicitud.objects.filter(
+                    producto_id=producto_id,
+                    estado=1,
+                    solicitud__estado=2,
+                    solicitud__fecha_solicitud__year=year
+                )
+                .values(month=ExtractMonth('solicitud__fecha_solicitud'))  # Extraer el mes
+                .annotate(total_cantidad=Sum('cantidad'))  # Sumar las cantidades
+                .order_by('month')  # Ordenar por mes
+            )
+
+            # Formatear la respuesta
+            suma = {result['month']: result['total_cantidad'] for result in resultados}
+
+            return JsonResponse({'suma': suma})
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=500)
+        
+
+@api_view(['GET'])
+def lista_anios(request):
+    anios = obtener_anios()
+    anios_list = [anio['fecha_solicitud__year'] for anio in anios]
+    return Response(anios_list)
+
+@api_view(['GET'])
+def obtener_meses_por_año(request, año):
+    try:
+        # Filtra las solicitudes por el año seleccionado y obtiene los meses
+        meses = Solicitud.objects.filter(
+            estado=2,
+            fecha_solicitud__year=año
+        ).values('fecha_solicitud__month').annotate(count=Count('id')).order_by('fecha_solicitud__month')
+
+        # Extrae los meses únicos
+        meses_unicos = [mes['fecha_solicitud__month'] for mes in meses]
+        
+        return JsonResponse({'meses': meses_unicos}, status=200)
+
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+    
+@api_view(['GET'])
+def obtener_productos_por_año(request, año):
+    productos = DetalleSolicitud.objects.filter(
+        estado=1,
+        solicitud__estado=2,
+        solicitud__fecha_solicitud__year=año
+    ).values('producto__id', 'producto__nombre', 'producto__talla').distinct()
+
+    # Convierte los resultados a una lista de diccionarios
+    productos_list = list(productos)
+
+    return JsonResponse({'productos': productos_list})

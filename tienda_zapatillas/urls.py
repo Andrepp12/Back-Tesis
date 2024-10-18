@@ -23,6 +23,7 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/auth/', include('auth_app.urls')),  # Incluir las URLs de auth_app aquí
     path('api/', include('gestion.urls')),  # Incluir las URLs de festion aquí
+    path('api/chat/', include('chatbot.urls')),  # Incluir las URLs de chatbot
 ]
 
 if settings.DEBUG:
