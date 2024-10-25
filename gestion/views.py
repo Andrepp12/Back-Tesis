@@ -14,7 +14,7 @@ from django.utils import timezone
 from rest_framework.views import APIView
 from django.shortcuts import get_object_or_404
 from django.db.models import Sum, F
-from django.db.models.functions import ExtractMonth  # Importa ExtractMonth
+from django.db.models.functions import ExtractYear, ExtractMonth
 
 class MarcaViewSet(viewsets.ModelViewSet):
     queryset = Marca.objects.all()
@@ -342,3 +342,37 @@ def obtener_productos_por_año(request, año):
     productos_list = list(productos)
 
     return JsonResponse({'productos': productos_list})
+
+@api_view(['GET'])
+def suma_cantidad_all(request):
+    if request.method == 'GET':
+        producto_id = request.GET.get('producto_id')
+
+        if not producto_id:
+            return JsonResponse({'error': 'Parámetro "producto_id" faltante'}, status=400)
+
+        try:
+            # Sumar las cantidades agrupadas por año y mes
+            resultados = (
+                DetalleSolicitud.objects.filter(
+                    producto_id=producto_id,
+                    estado=1,
+                    solicitud__estado=2
+                )
+                .values(year=ExtractYear('solicitud__fecha_solicitud'), month=ExtractMonth('solicitud__fecha_solicitud'))  # Extraer año y mes
+                .annotate(total_cantidad=Sum('cantidad'))  # Sumar las cantidades
+                .order_by('year', 'month')  # Ordenar por año y mes
+            )
+
+            # Formatear la respuesta
+            suma = {}
+            for result in resultados:
+                year = result['year']
+                month = result['month']
+                if year not in suma:
+                    suma[year] = {}
+                suma[year][month] = result['total_cantidad']
+
+            return JsonResponse({'suma': suma})
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=500)
