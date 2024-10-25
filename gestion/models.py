@@ -99,3 +99,18 @@ class DetalleDevolucion(models.Model):
     cantidad = models.IntegerField()
     descripcion = models.TextField()
     estado = models.IntegerField(default=1)
+
+class TipoMovimiento(models.Model):
+    nombre = models.CharField(max_length=100)
+    estado = models.IntegerField(default=1)
+    descripcion = models.TextField()
+
+class Movimiento(models.Model):
+    producto = models.ForeignKey(Producto, on_delete=models.CASCADE)
+    cantidad = models.IntegerField()
+    valor_unitario = models.DecimalField(max_digits=10, decimal_places=2)
+    monto = models.DecimalField(max_digits=10, decimal_places=2)
+    fecha_movimiento = models.DateField()
+    codigo_trans = models.CharField(max_length=50,  blank=True, null=True)
+    estado = models.IntegerField(default=1)
+    tipo_mov = models.ForeignKey(TipoMovimiento, on_delete=models.CASCADE)

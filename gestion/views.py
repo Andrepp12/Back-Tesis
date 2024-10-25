@@ -1,8 +1,8 @@
 from django.shortcuts import render
 from rest_framework import viewsets
 from rest_framework.decorators import api_view
-from .models import Marca, Proveedor, Producto, Stand, Pedido, DetallePedido, Solicitud, DetalleSolicitud, Devolucion, DetalleDevolucion
-from .serializers import MarcaSerializer, ProveedorSerializer, ProductoSerializer, StandSerializer, PedidoSerializer, DetallePedidoSerializer, SolicitudSerializer, DetalleSolicitudSerializer, DevolucionSerializer, DetalleDevolucionSerializer
+from .models import Marca, Movimiento, Proveedor, Producto, Stand, Pedido, DetallePedido, Solicitud, DetalleSolicitud, Devolucion, DetalleDevolucion, TipoMovimiento
+from .serializers import MarcaSerializer, MovimientoSerializer, ProveedorSerializer, ProductoSerializer, StandSerializer, PedidoSerializer, DetallePedidoSerializer, SolicitudSerializer, DetalleSolicitudSerializer, DevolucionSerializer, DetalleDevolucionSerializer, TipoMovimientoSerializer
 from rest_framework.permissions import IsAuthenticated
 from rest_framework import status
 from rest_framework.response import Response
@@ -86,7 +86,7 @@ class PedidoViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        return Pedido.objects.filter(estado=1)
+        return Pedido.objects.filter(estado__in=[1, 2])
     
     def destroy(self, request, *args, **kwargs):
         # Obtener el objeto a eliminar (cambiar estado)
@@ -175,6 +175,38 @@ class DetalleDevolucionViewSet(viewsets.ModelViewSet):
         detalledevolucion.estado = 0
         detalledevolucion.save()
         return Response({"detail": "detalledevolucion marcada como inactivo"}, status=status.HTTP_204_NO_CONTENT)
+
+class TipoMovimientoViewSet(viewsets.ModelViewSet):
+    queryset = TipoMovimiento.objects.all()
+    serializer_class = TipoMovimientoSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        return TipoMovimiento.objects.filter(estado=1)
+    
+    def destroy(self, request, *args, **kwargs):
+        # Obtener el objeto a eliminar (cambiar estado)
+        tipo_mov = self.get_object()
+        # Cambiar el estado a 0 en lugar de eliminar el objeto
+        tipo_mov.estado = 0
+        tipo_mov.save()
+        return Response({"detail": "tipo movimiento marcada como inactivo"}, status=status.HTTP_204_NO_CONTENT)
+    
+class MovimientoViewSet(viewsets.ModelViewSet):
+    queryset = Movimiento.objects.all()
+    serializer_class = MovimientoSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        return Movimiento.objects.filter(estado=1)
+    
+    def destroy(self, request, *args, **kwargs):
+        # Obtener el objeto a eliminar (cambiar estado)
+        movimiento = self.get_object()
+        # Cambiar el estado a 0 en lugar de eliminar el objeto
+        movimiento.estado = 0
+        movimiento.save()
+        return Response({"detail": "Movimiento marcada como inactivo"}, status=status.HTTP_204_NO_CONTENT)
 
 
 @api_view(['GET'])

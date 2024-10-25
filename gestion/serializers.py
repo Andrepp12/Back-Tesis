@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Marca, Proveedor, Producto, Stand, Pedido, DetallePedido, Solicitud, DetalleSolicitud, Devolucion, DetalleDevolucion
+from .models import Marca, Movimiento, Proveedor, Producto, Stand, Pedido, DetallePedido, Solicitud, DetalleSolicitud, Devolucion, DetalleDevolucion, TipoMovimiento
 
 class MarcaSerializer(serializers.ModelSerializer):
     class Meta:
@@ -82,3 +82,26 @@ class DetalleDevolucionSerializer(serializers.ModelSerializer):
     class Meta:
         model = DetalleDevolucion
         fields = ['id', 'devolucion', 'cantidad', 'descripcion', 'estado', 'producto', 'producto_id']
+
+class TipoMovimientoSerializer(serializers.ModelSerializer):
+    # producto = ProductoSerializer(read_only=True)
+    # # Utilizamos el stand_id para crear o actualizar la solicitud (solo escritura)
+    # producto_id = serializers.PrimaryKeyRelatedField(queryset=Producto.objects.all(), source='producto', write_only=True)
+
+    class Meta:
+        model = TipoMovimiento
+        fields = '__all__'
+
+class MovimientoSerializer(serializers.ModelSerializer):
+    producto = ProductoSerializer(read_only=True)
+    # # Utilizamos el stand_id para crear o actualizar la solicitud (solo escritura)
+    producto_id = serializers.PrimaryKeyRelatedField(queryset=Producto.objects.all(), source='producto', write_only=True)
+
+    tipo_mov = TipoMovimientoSerializer(read_only=True)  # Para mostrar los detalles completos de la solicitud
+    tipo_mov_id = serializers.PrimaryKeyRelatedField(
+        queryset=TipoMovimiento.objects.all(), source='tipo_mov', write_only=True, required=False
+    )  # Para permitir la asignación de la solicitud por su ID, no requerido
+
+    class Meta:
+        model = Movimiento
+        fields = ['id', 'valor_unitario', 'cantidad', 'monto', 'fecha_movimiento', 'codigo_trans', 'estado', 'tipo_mov', 'tipo_mov_id', 'producto', 'producto_id']

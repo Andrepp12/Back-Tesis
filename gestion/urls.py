@@ -2,7 +2,7 @@ from django.conf import settings
 from django.conf.urls.static import static
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
-from .views import MarcaViewSet, ProveedorViewSet, ProductoViewSet, StandViewSet, PedidoViewSet, DetallePedidoViewSet, SolicitudViewSet, DetalleSolicitudViewSet, DevolucionViewSet, DetalleDevolucionViewSet, detalles_por_devolucion, detalles_por_pedido, detalles_por_solicitud, listar_devoluciones_con_boleta, listar_devoluciones_con_pedido, listar_devoluciones_con_solicitud
+from .views import MarcaViewSet, MovimientoViewSet, ProveedorViewSet, ProductoViewSet, StandViewSet, PedidoViewSet, DetallePedidoViewSet, SolicitudViewSet, DetalleSolicitudViewSet, DevolucionViewSet, DetalleDevolucionViewSet, TipoMovimientoViewSet, detalles_por_devolucion, detalles_por_pedido, detalles_por_solicitud, listar_devoluciones_con_boleta, listar_devoluciones_con_pedido, listar_devoluciones_con_solicitud
 from .views import suma_cantidades
 from .views import lista_anios
 from .views import obtener_meses_por_año
@@ -19,6 +19,8 @@ router.register(r'solicitudes', SolicitudViewSet)
 router.register(r'detalles_solicitud', DetalleSolicitudViewSet)
 router.register(r'devoluciones', DevolucionViewSet)
 router.register(r'detalles_devolucion', DetalleDevolucionViewSet)
+router.register(r'tipo_movimiento', TipoMovimientoViewSet)
+router.register(r'movimientos', MovimientoViewSet)
 
 urlpatterns = [
     path('gestion/', include(router.urls)),
@@ -28,6 +30,7 @@ urlpatterns = [
     path('gestion/devoluciones-con-solicitud/', listar_devoluciones_con_solicitud, name='devoluciones-con-solicitud'),
     path('gestion/devoluciones-con-pedido/', listar_devoluciones_con_pedido, name='devoluciones-con-pedido'),
     path('gestion/devoluciones-con-boleta/', listar_devoluciones_con_boleta, name='devoluciones-con-boleta'),
+    
     path('gestion/suma-cantidades/', suma_cantidades, name='suma_cantidades'),
     path('gestion/anos/', lista_anios, name='lista_anios'),
     path('gestion/meses/<int:año>/', obtener_meses_por_año, name='obtener_meses_por_año'),
