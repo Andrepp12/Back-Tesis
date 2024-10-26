@@ -11,8 +11,12 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 """
 
 from datetime import timedelta
+from dotenv import load_dotenv
 import os
 from pathlib import Path
+
+## Env variables
+load_dotenv()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -22,12 +26,12 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-&s68ef3bwcg$svgv#4%*!u7ups99a8$(#9uf4f*lonmt6q_+=x'
+SECRET_KEY = os.getenv("SECRET_KEY", "secret-insecure")
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['localhost', '127.0.0.1']
+ALLOWED_HOSTS = ['*']
 
 
 # Application definition
@@ -86,11 +90,11 @@ WSGI_APPLICATION = 'tienda_zapatillas.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'tesis',  # Nombre de la base de datos MySQL
-        'USER': 'root',            # Tu usuario de MySQL
-        'PASSWORD': '73384545',     # La contraseña del usuario MySQL
-        'HOST': 'localhost',                   # O el IP si tu DB está en otro servidor
-        'PORT': '3306',                        # Puerto de MySQL, por defecto es 3306
+        'NAME': os.environ.get('BD_NAME', 'tesis'),  # Nombre de la base de datos MySQL
+        'USER': os.environ.get('BD_USERNAME', 'root'),            # Tu usuario de MySQL
+        'PASSWORD': os.environ.get('BD_PASSWORD', '1234'),     # La contraseña del usuario MySQL
+        'HOST': os.environ.get('BD_HOSTNAME', 'localhost'), # O el IP si tu DB está en otro servidor
+        'PORT': os.environ.get('BD_PORT', '3306'),                        # Puerto de MySQL, por defecto es 3306
     }
 }
 
@@ -162,7 +166,8 @@ SIMPLE_JWT = {
 CORS_ALLOW_ALL_ORIGINS = True
 CORS_ALLOW_CREDENTIALS = True
 CSRF_TRUSTED_ORIGINS = [
-    "http://localhost:3000",  # Agrega el origen de tu frontend
+    "https://*.onrender.com",
+    "http://*"
 ]
 
 MEDIA_URL = '/media/'
