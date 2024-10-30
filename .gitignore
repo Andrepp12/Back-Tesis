@@ -8,3 +8,5 @@ media/
 *.lo
 venv/
 .env
+**__pycache__**
+**migrations**
