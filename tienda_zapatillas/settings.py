@@ -92,7 +92,7 @@ DATABASES = {
         'ENGINE': 'django.db.backends.mysql',
         'NAME': os.environ.get('BD_NAME', 'tesis'),  # Nombre de la base de datos MySQL
         'USER': os.environ.get('BD_USERNAME', 'root'),            # Tu usuario de MySQL
-        'PASSWORD': os.environ.get('BD_PASSWORD', '1234'),     # La contraseña del usuario MySQL
+        'PASSWORD': os.environ.get('BD_PASSWORD', '73384545'),     # La contraseña del usuario MySQL
         'HOST': os.environ.get('BD_HOSTNAME', 'localhost'), # O el IP si tu DB está en otro servidor
         'PORT': os.environ.get('BD_PORT', '3306'),                        # Puerto de MySQL, por defecto es 3306
     }
