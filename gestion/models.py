@@ -24,8 +24,10 @@ class Producto(models.Model):
     imagen = models.ImageField(upload_to='images/', blank=True, null=True)  # Define el valor predeterminado
     marca = models.ForeignKey(Marca, on_delete=models.CASCADE)
     codigo = models.CharField(max_length=50)
+    genero = models.CharField(max_length=50, blank=True, null=True)
+    color = models.CharField(max_length=50, blank=True, null=True)
     descripcion = models.TextField()
-    talla = models.IntegerField()
+    talla = models.DecimalField(max_digits=10, decimal_places=1)
     precio = models.DecimalField(max_digits=10, decimal_places=2)
     stock_almacen = models.IntegerField(default=0)
     stock_total = models.IntegerField(default=0)
@@ -108,8 +110,6 @@ class TipoMovimiento(models.Model):
 class Movimiento(models.Model):
     producto = models.ForeignKey(Producto, on_delete=models.CASCADE)
     cantidad = models.IntegerField()
-    valor_unitario = models.DecimalField(max_digits=10, decimal_places=2)
-    monto = models.DecimalField(max_digits=10, decimal_places=2)
     fecha_movimiento = models.DateField()
     codigo_trans = models.CharField(max_length=50,  blank=True, null=True)
     estado = models.IntegerField(default=1)

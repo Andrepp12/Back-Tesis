@@ -2,7 +2,7 @@ from django.conf import settings
 from django.conf.urls.static import static
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
-from .views import MarcaViewSet, MovimientoViewSet, ProveedorViewSet, ProductoViewSet, StandViewSet, PedidoViewSet, DetallePedidoViewSet, SolicitudViewSet, DetalleSolicitudViewSet, DevolucionViewSet, DetalleDevolucionViewSet, TipoMovimientoViewSet, detalles_por_devolucion, detalles_por_pedido, detalles_por_solicitud, listar_devoluciones_con_boleta, listar_devoluciones_con_pedido, listar_devoluciones_con_solicitud, suma_cantidad_all
+from .views import MarcaViewSet, MovimientoViewSet, ProveedorViewSet, ProductoViewSet, StandViewSet, PedidoViewSet, DetallePedidoViewSet, SolicitudViewSet, DetalleSolicitudViewSet, DevolucionViewSet, DetalleDevolucionViewSet, TipoMovimientoViewSet, detalles_por_devolucion, detalles_por_pedido, detalles_por_solicitud, lista_productos, listar_devoluciones_con_boleta, listar_devoluciones_con_pedido, listar_devoluciones_con_solicitud, obtener_anos_por_producto, suma_cantidad_all
 from .views import suma_cantidades
 from .views import lista_anios
 from .views import obtener_meses_por_año
@@ -36,6 +36,8 @@ urlpatterns = [
     path('gestion/meses/<int:año>/', obtener_meses_por_año, name='obtener_meses_por_año'),
     path('gestion/productos/ano/<int:año>/', obtener_productos_por_año, name='obtener_productos_por_año'),
     path('gestion/suma-cantidades-all/', suma_cantidad_all, name='suma_cantidad_all'),
+    path('gestion/productos/', lista_productos, name='lista_productos'),
+    path('gestion/anios/producto/<int:producto_id>/', obtener_anos_por_producto, name='obtener_anos_por_producto'),
 ]
 
 

@@ -118,7 +118,7 @@ class SolicitudViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        return Solicitud.objects.filter(estado__in=[1, 2])
+        return Solicitud.objects.filter(estado__in=[1, 2, 3])
     
     def destroy(self, request, *args, **kwargs):
         # Obtener el objeto a eliminar (cambiar estado)
@@ -376,3 +376,37 @@ def suma_cantidad_all(request):
             return JsonResponse({'suma': suma})
         except Exception as e:
             return JsonResponse({'error': str(e)}, status=500)
+
+@api_view(['GET'])
+def lista_productos(request):
+    # Filtra los productos que tienen estado = 1
+    productos = Producto.objects.filter(estado=1).select_related('marca')
+
+    # Crea una lista de diccionarios con la información deseada, incluyendo el ID
+    productos_list = [
+        {
+            'id': producto.id,  # Añade el ID del producto
+            'nombre': producto.nombre,
+            'talla': producto.talla,
+            'marca': producto.marca.nombre  # Accede al nombre de la marca
+        }
+        for producto in productos
+    ]
+
+    return Response(productos_list)
+
+@api_view(['GET'])
+def obtener_anos_por_producto(request, producto_id):
+    # Filtrar las solicitudes que contienen el producto y cuyas solicitudes y detalles tengan los estados requeridos
+    años = Solicitud.objects.filter(
+        detalles_solicitud__producto_id=producto_id,
+        estado=2  # Asegurarse de que la solicitud esté aprobada
+    ).filter(
+        detalles_solicitud__estado=1  # Filtra los detalles de la solicitud que están activos
+    ).annotate(anio=ExtractYear('fecha_solicitud')).values('anio').distinct()
+
+    # Convierte los resultados a una lista
+    años_list = list(años)
+
+    # Si no se encuentran años, podrías devolver una respuesta específica
+    return JsonResponse({'años': [a['anio'] for a in años_list]})

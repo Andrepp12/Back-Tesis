@@ -104,4 +104,4 @@ class MovimientoSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Movimiento
-        fields = ['id', 'valor_unitario', 'cantidad', 'monto', 'fecha_movimiento', 'codigo_trans', 'estado', 'tipo_mov', 'tipo_mov_id', 'producto', 'producto_id']
+        fields = ['id', 'cantidad', 'fecha_movimiento', 'codigo_trans', 'estado', 'tipo_mov', 'tipo_mov_id', 'producto', 'producto_id']

@@ -9,6 +9,7 @@ from rest_framework.views import APIView
 from django.contrib.auth.hashers import make_password
 from rest_framework.permissions import AllowAny
 from django.contrib.auth import authenticate
+from rest_framework.permissions import IsAuthenticated
 
 class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
     @classmethod
@@ -48,6 +49,7 @@ class CustomTokenObtainPairView(TokenObtainPairView):
     serializer_class = CustomTokenObtainPairSerializer
 
 class CreateUserView(APIView):
+    permission_classes = [IsAuthenticated]
     permission_classes = [AllowAny]
 
     def post(self, request):
