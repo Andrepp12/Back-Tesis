@@ -42,11 +42,11 @@ class Stand(models.Model):
     nombre = models.CharField(max_length=100)
     estado = models.IntegerField(default=1)
 
-class ProductoStand(models.Model):
-    producto = models.ForeignKey(Producto, on_delete=models.CASCADE)
-    stand = models.ForeignKey(Stand, on_delete=models.CASCADE)
-    cantidad = models.IntegerField()
-    estado = models.IntegerField(default=1)
+# class ProductoStand(models.Model):
+#     producto = models.ForeignKey(Producto, on_delete=models.CASCADE)
+#     stand = models.ForeignKey(Stand, on_delete=models.CASCADE)
+#     cantidad = models.IntegerField()
+#     estado = models.IntegerField(default=1)
 
 class Pedido(models.Model):
     proveedor = models.ForeignKey(Proveedor, on_delete=models.CASCADE)
