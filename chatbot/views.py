@@ -4,7 +4,7 @@ import json  # Importa json para manejar el cuerpo de la solicitud
 from django.views.decorators.csrf import csrf_exempt
 
 # Configura la API de Gemini
-genai.configure(api_key="AIzaSyAwRvcgNGBRQ__iH0Gbm-_CVhLBOCfqf10")
+genai.configure(api_key="AIzaSyAzPWlk3Bqek9FDrDY0CPLm4ZgcbR7XAQU")
 
 @csrf_exempt
 def ask_question(request):

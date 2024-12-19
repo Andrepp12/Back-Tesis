@@ -114,3 +114,4 @@ class Movimiento(models.Model):
     codigo_trans = models.CharField(max_length=50,  blank=True, null=True)
     estado = models.IntegerField(default=1)
     tipo_mov = models.ForeignKey(TipoMovimiento, on_delete=models.CASCADE)
+    stand = models.ForeignKey(Stand, on_delete=models.CASCADE, blank=True, null=True)
