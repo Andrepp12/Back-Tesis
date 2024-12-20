@@ -276,35 +276,150 @@ def listar_devoluciones_con_boleta(request):
     return Response(serializer.data)
 
 
+
+
+ 
+# Diccionario para convertir números de mes a nombres de mes
+MESES = {
+    1: 'Enero', 2: 'Febrero', 3: 'Marzo', 4: 'Abril', 5: 'Mayo', 6: 'Junio',
+    7: 'Julio', 8: 'Agosto', 9: 'Septiembre', 10: 'Octubre', 11: 'Noviembre', 12: 'Diciembre'
+}
+
+@api_view(['GET'])
+def cantidad_devolucion(request):
+    """
+    Devuelve el total de devoluciones por mes para un producto específico en un año dado,
+    asegurando que la devolución y el detalle de devolución tengan estado 1, y que la devolución
+    no esté relacionada con un pedido ni una solicitud.
+    """
+    if request.method == 'GET':
+        producto_id = request.GET.get('producto_id')
+        year = request.GET.get('year')
+
+        # Validaciones básicas
+        if not producto_id or not year:
+            return JsonResponse({"error": "Se requieren 'producto_id' y 'year' en la solicitud."}, status=400)
+
+        try:
+            # Filtrar DetalleDevolucion con estado 1 y criterios adicionales
+            devoluciones = DetalleDevolucion.objects.filter(
+                estado=1,
+                producto_id=producto_id,
+                devolucion__estado=1,  # Asegura que la Devolucion tenga estado 1
+                devolucion__fecha_devolucion__year=year,  # Año específico
+                devolucion__pedido__isnull=True,  # Pedido nulo
+                devolucion__solicitud__isnull=True  # Solicitud nula
+            ).annotate(
+                mes=ExtractMonth('devolucion__fecha_devolucion')  # Extraer el mes de la fecha de devolución
+            ).values('mes').annotate(
+                total_devoluciones=Count('id')  # Contar las devoluciones por mes
+            ).order_by('mes')  # Ordenar por mes
+
+            # Crear un diccionario para los resultados con nombres de mes
+            resultado = {
+                MESES[item['mes']]: item['total_devoluciones'] for item in devoluciones
+            }
+
+            # Devolver el total de devoluciones por mes
+            return JsonResponse({'total_devoluciones_por_mes': resultado}, status=200)
+
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=500)
+
+
+
+@api_view(['GET'])
+def suma_razon_devolucion(request):
+    """
+    Devuelve la cantidad de veces que se repiten las diferentes razones de devolución,
+    asegurando que la devolución y los detalles de devolución tengan estado 1.
+    """
+    if request.method == 'GET':
+        producto_id = request.GET.get('producto_id')
+        year = request.GET.get('year')
+
+        # Validaciones básicas
+        if not producto_id or not year:
+            return JsonResponse({"error": "Se requieren 'producto_id' y 'year' en la solicitud."}, status=400)
+
+        try:
+            # Filtrar DetalleDevolucion con estado 1 y criterios adicionales
+            devoluciones = DetalleDevolucion.objects.filter(
+                estado=1,
+                producto_id=producto_id,
+                devolucion__estado=1,  # Asegura que la Devolucion tenga estado 1
+                devolucion__fecha_devolucion__year=year,
+                devolucion__pedido__isnull=True,
+                devolucion__solicitud__isnull=True
+            ).values('devolucion__razon').annotate(total=Count('devolucion__razon')).order_by('-total')
+
+            # Formatear la respuesta
+            suma_neta = {item['devolucion__razon']: item['total'] for item in devoluciones}
+            return JsonResponse({'suma': suma_neta}, status=200)
+
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=500)
+
+
+
 @api_view(['GET'])
 def suma_cantidades(request):
     if request.method == 'GET':
         producto_id = request.GET.get('producto_id')
-        year = request.GET.get('year')  # Cambiar 'año' a 'year'
+        year = request.GET.get('year')
 
         if not producto_id or not year:
             return JsonResponse({'error': 'Parámetros faltantes'}, status=400)
 
         try:
-            # Sumar las cantidades agrupadas por mes
-            resultados = (
-                DetalleSolicitud.objects.filter(
+            # Filtrar y sumar cantidades de tipo_mov=1
+            sumas_entradas = (
+                Movimiento.objects.filter(
                     producto_id=producto_id,
                     estado=1,
-                    solicitud__estado=2,
-                    solicitud__fecha_solicitud__year=year
+                    tipo_mov=1,
+                    fecha_movimiento__year=year
                 )
-                .values(month=ExtractMonth('solicitud__fecha_solicitud'))  # Extraer el mes
+                .annotate(month=ExtractMonth('fecha_movimiento'))  # Extraer el mes
+                .values('month')
                 .annotate(total_cantidad=Sum('cantidad'))  # Sumar las cantidades
-                .order_by('month')  # Ordenar por mes
+                .order_by('month')
             )
 
-            # Formatear la respuesta
-            suma = {result['month']: result['total_cantidad'] for result in resultados}
+            # Filtrar y sumar cantidades de tipo_mov=3
+            sumas_salidas = (
+                Movimiento.objects.filter(
+                    producto_id=producto_id,
+                    estado=1,
+                    tipo_mov=3,
+                    fecha_movimiento__year=year
+                )
+                .annotate(month=ExtractMonth('fecha_movimiento'))  # Extraer el mes
+                .values('month')
+                .annotate(total_cantidad=Sum('cantidad'))  # Sumar las cantidades
+                .order_by('month')
+            )
 
-            return JsonResponse({'suma': suma})
+            # Crear un diccionario para las sumas netas por mes
+            suma_neta = {}
+
+            for entrada in sumas_entradas:
+                mes = entrada['month']
+                suma_neta[mes] = entrada['total_cantidad']
+
+            for salida in sumas_salidas:
+                mes = salida['month']
+                if mes in suma_neta:
+                    suma_neta[mes] -= salida['total_cantidad']
+                else:
+                    suma_neta[mes] = -salida['total_cantidad']
+
+            # Formatear la respuesta
+            return JsonResponse({'suma': suma_neta})
+
         except Exception as e:
             return JsonResponse({'error': str(e)}, status=500)
+
         
 
 @api_view(['GET'])
@@ -352,28 +467,53 @@ def suma_cantidad_all(request):
             return JsonResponse({'error': 'Parámetro "producto_id" faltante'}, status=400)
 
         try:
-            # Sumar las cantidades agrupadas por año y mes
-            resultados = (
-                DetalleSolicitud.objects.filter(
+            # Filtrar y sumar cantidades de tipo_mov=1 (entradas) por año y mes
+            sumas_entradas = (
+                Movimiento.objects.filter(
                     producto_id=producto_id,
                     estado=1,
-                    solicitud__estado=2
+                    tipo_mov=1
                 )
-                .values(year=ExtractYear('solicitud__fecha_solicitud'), month=ExtractMonth('solicitud__fecha_solicitud'))  # Extraer año y mes
+                .values(year=ExtractYear('fecha_movimiento'), month=ExtractMonth('fecha_movimiento'))  # Extraer año y mes
                 .annotate(total_cantidad=Sum('cantidad'))  # Sumar las cantidades
-                .order_by('year', 'month')  # Ordenar por año y mes
+                .order_by('year', 'month')
             )
 
-            # Formatear la respuesta
-            suma = {}
-            for result in resultados:
-                year = result['year']
-                month = result['month']
-                if year not in suma:
-                    suma[year] = {}
-                suma[year][month] = result['total_cantidad']
+            # Filtrar y sumar cantidades de tipo_mov=3 (salidas) por año y mes
+            sumas_salidas = (
+                Movimiento.objects.filter(
+                    producto_id=producto_id,
+                    estado=1,
+                    tipo_mov=3
+                )
+                .values(year=ExtractYear('fecha_movimiento'), month=ExtractMonth('fecha_movimiento'))  # Extraer año y mes
+                .annotate(total_cantidad=Sum('cantidad'))  # Sumar las cantidades
+                .order_by('year', 'month')
+            )
 
-            return JsonResponse({'suma': suma})
+            # Crear un diccionario para las sumas netas por año y mes
+            suma_neta = {}
+
+            for entrada in sumas_entradas:
+                year = entrada['year']
+                month = entrada['month']
+                if year not in suma_neta:
+                    suma_neta[year] = {}
+                suma_neta[year][month] = entrada['total_cantidad']
+
+            for salida in sumas_salidas:
+                year = salida['year']
+                month = salida['month']
+                if year not in suma_neta:
+                    suma_neta[year] = {}
+                if month in suma_neta[year]:
+                    suma_neta[year][month] -= salida['total_cantidad']
+                else:
+                    suma_neta[year][month] = -salida['total_cantidad']
+
+            # Formatear la respuesta
+            return JsonResponse({'suma': suma_neta})
+
         except Exception as e:
             return JsonResponse({'error': str(e)}, status=500)
 
@@ -397,16 +537,17 @@ def lista_productos(request):
 
 @api_view(['GET'])
 def obtener_anos_por_producto(request, producto_id):
-    # Filtrar las solicitudes que contienen el producto y cuyas solicitudes y detalles tengan los estados requeridos
-    años = Solicitud.objects.filter(
-        detalles_solicitud__producto_id=producto_id,
-        estado=2  # Asegurarse de que la solicitud esté aprobada
-    ).filter(
-        detalles_solicitud__estado=1  # Filtra los detalles de la solicitud que están activos
-    ).annotate(anio=ExtractYear('fecha_solicitud')).values('anio').distinct()
+    # Filtrar los movimientos que cumplen con las condiciones requeridas
+    anos = Movimiento.objects.filter(
+        producto_id=producto_id,
+        estado=1,  # Estado activo
+        tipo_mov=1  # Tipo de movimiento especificado
+    ).annotate(
+        anio=ExtractYear('fecha_movimiento')  # Extraer el año de la fecha de movimiento
+    ).values('anio').distinct()  # Obtener años distintos
 
-    # Convierte los resultados a una lista
-    años_list = list(años)
+    # Convertir los resultados a una lista de años
+    anos_list = list(anos)
 
-    # Si no se encuentran años, podrías devolver una respuesta específica
-    return JsonResponse({'años': [a['anio'] for a in años_list]})
+    # Devolver los años en formato JSON
+    return JsonResponse({'años': [a['anio'] for a in anos_list]})

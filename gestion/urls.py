@@ -3,10 +3,7 @@ from django.conf.urls.static import static
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from .views import MarcaViewSet, MovimientoViewSet, ProveedorViewSet, ProductoViewSet, StandViewSet, PedidoViewSet, DetallePedidoViewSet, SolicitudViewSet, DetalleSolicitudViewSet, DevolucionViewSet, DetalleDevolucionViewSet, TipoMovimientoViewSet, detalles_por_devolucion, detalles_por_pedido, detalles_por_solicitud, lista_productos, listar_devoluciones_con_boleta, listar_devoluciones_con_pedido, listar_devoluciones_con_solicitud, obtener_anos_por_producto, suma_cantidad_all
-from .views import suma_cantidades
-from .views import lista_anios
-from .views import obtener_meses_por_año
-from .views import obtener_productos_por_año
+from .views import suma_cantidades, lista_anios, obtener_meses_por_año, obtener_productos_por_año, suma_razon_devolucion, cantidad_devolucion
 
 router = DefaultRouter()
 router.register(r'marcas', MarcaViewSet)
@@ -30,6 +27,9 @@ urlpatterns = [
     path('gestion/devoluciones-con-solicitud/', listar_devoluciones_con_solicitud, name='devoluciones-con-solicitud'),
     path('gestion/devoluciones-con-pedido/', listar_devoluciones_con_pedido, name='devoluciones-con-pedido'),
     path('gestion/devoluciones-con-boleta/', listar_devoluciones_con_boleta, name='devoluciones-con-boleta'),
+
+    path('gestion/suma-razon-devolucion/', suma_razon_devolucion, name='suma_razon_devolucion'),
+    path('gestion/cantidad-devolucion/', cantidad_devolucion, name='cantidad_devolucion'),
     
     path('gestion/suma-cantidades/', suma_cantidades, name='suma_cantidades'),
     path('gestion/anos/', lista_anios, name='lista_anios'),
