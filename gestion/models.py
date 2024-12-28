@@ -2,8 +2,8 @@ from django.utils import timezone
 from django.db import models
 
 class Marca(models.Model):
-    codigo = models.CharField(max_length=50)
-    nombre = models.CharField(max_length=100)
+    codigo = models.CharField(max_length=50,unique=True)
+    nombre = models.CharField(max_length=100, unique=True)
     estado = models.IntegerField(default=1)
 
     def __str__(self):
@@ -11,7 +11,7 @@ class Marca(models.Model):
 
 class Proveedor(models.Model):
     nombre = models.CharField(max_length=100)
-    ruc = models.CharField(max_length=11, default='00000000000') 
+    ruc = models.CharField(max_length=11, default='00000000000', unique=True) 
     contacto = models.CharField(max_length=100)
     direccion = models.CharField(max_length=255)
     estado = models.IntegerField(default=1)
@@ -50,7 +50,7 @@ class Stand(models.Model):
 
 class Pedido(models.Model):
     proveedor = models.ForeignKey(Proveedor, on_delete=models.CASCADE)
-    factura = models.CharField(max_length=50, default='000000')
+    factura = models.CharField(max_length=50, default='000000', unique=True)
     fecha_pedido = models.DateField( default=timezone.now)
     fecha_entrega = models.DateField( default=timezone.now )
     precio_total = models.DecimalField(max_digits=10, decimal_places=2)

@@ -9,4 +9,4 @@ media/
 venv/
 .env
 **__pycache__**
-**migrations**
+**/migrations**
